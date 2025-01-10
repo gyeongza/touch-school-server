@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "nodemon",
-    "dev": "nodemon --watch '*.ts' --exec 'ts-node' index.ts"
+    "start": "nodemon src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@prisma/client": "^6.2.1",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "solapi": "^5.3.1"
   },
@@ -21,6 +23,7 @@
     "@types/node": "^20.9.0",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.1",
+    "prisma": "^6.2.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }
