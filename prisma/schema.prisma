@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id        Int      @id @default(autoincrement())
+  name      String   // SCHUL_NM (학교명)
+  address   String?  // ORG_RDNMA (도로명주소)
+  createdAt DateTime @default(now())
+  users     User[]   // School과 User의 관계 설정
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  phoneNumber String   @unique
+  name        String
+  grade       Int
+  class       Int
+  schoolId    Int
+  school      School   @relation(fields: [schoolId], references: [id])
+  createdAt   DateTime @default(now())
+}

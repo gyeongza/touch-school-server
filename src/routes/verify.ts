@@ -1,6 +1,10 @@
 import express, { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { generateTokenAndSetCookie } from '../utils/auth';
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
 const verificationStore: { [key: string]: string } = {};
 
@@ -17,22 +21,25 @@ router.post('/phone', async (req: Request, res: Response) => {
     return res.status(400).json({ message: '유효하지 않은 전화번호입니다' });
   }
 
-  const verificationCode = generateVerificationCode();
-  // TODO: 인증번호 DB에 저장하는 로직 추가
-  verificationStore[phoneNumber] = verificationCode;
-
   try {
-    const { SolapiMessageService } = require('solapi');
-    const messageService = new SolapiMessageService(
-      process.env.SOLAPI_API_KEY,
-      process.env.SOLAPI_API_SECRET
-    );
+    const verificationCode = generateVerificationCode();
+    verificationStore[phoneNumber] = verificationCode;
 
-    await messageService.send({
-      to: phoneNumber,
-      from: '01073829600',
-      text: `인증번호는 ${verificationCode}입니다. 3분 이내에 입력해주세요.`,
-    });
+    if (process.env.NODE_ENV === 'production') {
+      const { SolapiMessageService } = require('solapi');
+      const messageService = new SolapiMessageService(
+        process.env.SOLAPI_API_KEY,
+        process.env.SOLAPI_API_SECRET
+      );
+
+      await messageService.send({
+        to: phoneNumber,
+        from: '01073829600',
+        text: `인증번호는 ${verificationCode}입니다. 3분 이내에 입력해주세요.`,
+      });
+    } else if (process.env.NODE_ENV === 'development') {
+      console.log(`인증번호: ${verificationCode}`);
+    }
 
     // 3분 후 인증번호 만료
     setTimeout(
@@ -46,8 +53,8 @@ router.post('/phone', async (req: Request, res: Response) => {
 
     res.status(200).send('인증번호가 전송되었습니다');
   } catch (error) {
-    console.error('SMS 발송 실패:', error);
-    res.status(500).json({ message: 'SMS 발송에 실패했습니다' });
+    console.error('처리 중 오류 발생:', error);
+    res.status(500).json({ message: '처리 중 오류가 발생했습니다' });
   }
 });
 
@@ -69,7 +76,7 @@ router.get(
 // 인증번호 확인
 router.post(
   '/confirm',
-  (
+  async (
     req: Request<object, object, { phoneNumber: string; code: string }>,
     res: Response
   ) => {
@@ -80,18 +87,97 @@ router.post(
       return res.status(404).json({ message: '인증번호를 찾을 수 없습니다' });
     }
 
-    if (storedCode === code) {
+    if (storedCode !== code) {
+      return res.status(400).json({
+        verified: false,
+        message: '잘못된 인증번호입니다',
+      });
+    }
+
+    try {
       // 인증 성공 시 저장된 인증번호 삭제
       delete verificationStore[phoneNumber];
-      res
-        .status(200)
-        .json({ verified: true, message: '인증이 완료되었습니다' });
-    } else {
-      res
-        .status(400)
-        .json({ verified: false, message: '잘못된 인증번호입니다' });
+
+      // 기존 사용자 확인
+      const existingUser = await prisma.user.findUnique({
+        where: { phoneNumber },
+      });
+
+      if (existingUser) {
+        generateTokenAndSetCookie(existingUser, res);
+
+        return res.status(200).json({
+          verified: true,
+          isExistingUser: true,
+          message: '인증이 완료되었습니다',
+          user: existingUser,
+        });
+      }
+
+      // 새로운 사용자인 경우
+      return res.status(200).json({
+        verified: true,
+        isExistingUser: false,
+        message: '인증이 완료되었습니다. 회원가입을 진행해주세요.',
+      });
+    } catch (error) {
+      console.error('인증 확인 중 오류 발생:', error);
+      res.status(500).json({ message: '처리 중 오류가 발생했습니다' });
     }
   }
 );
+
+// 회원가입 처리
+router.post('/register', async (req: Request, res: Response) => {
+  const { phoneNumber, name, grade, class: classNumber, schoolId } = req.body;
+
+  // 필수 필드 검증
+  if (!phoneNumber || !name || !grade || !classNumber || !schoolId) {
+    return res.status(400).json({ message: '모든 필드를 입력해주세요' });
+  }
+
+  try {
+    // 인증 여부 확인
+    if (verificationStore[phoneNumber]) {
+      return res
+        .status(400)
+        .json({ message: '전화번호 인증이 완료되지 않았습니다' });
+    }
+
+    // 학교 존재 여부 확인
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) {
+      return res.status(404).json({ message: '존재하지 않는 학교입니다' });
+    }
+
+    const gradeNum = parseInt(grade);
+    const classNum = parseInt(classNumber);
+
+    // 사용자 생성
+    const user = await prisma.user.create({
+      data: {
+        phoneNumber,
+        name,
+        grade: gradeNum,
+        class: classNum,
+        schoolId,
+      },
+    });
+
+    generateTokenAndSetCookie(user, res);
+
+    // token 제외하고 응답
+    res.status(201).json({
+      message: '회원가입이 완료되었습니다',
+      user,
+    });
+  } catch (error) {
+    console.error('회원가입 처리 중 오류 발생:', error);
+    res.status(500).json({ message: '회원가입 처리 중 오류가 발생했습니다' });
+  }
+});
 
 export default router;
