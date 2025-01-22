@@ -21,7 +21,10 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: '등록되지 않은 사용자입니다' });
+      return res.status(404).json({
+        message: '등록되지 않은 사용자입니다',
+        errorMessageKey: 'USER_NOT_FOUND',
+      });
     }
 
     generateTokenAndSetCookie(user, res);

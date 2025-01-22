@@ -10,14 +10,21 @@ const prisma = new PrismaClient();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader) {
-      return res.status(401).json({ message: '인증이 필요합니다' });
+      return res.status(401).json({
+        message: '인증이 필요합니다',
+        errorMessageKey: 'AUTH_REQUIRED',
+      });
     }
 
     // Bearer 토큰에서 실제 토큰 부분만 추출
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ message: '유효하지 않은 토큰 형식입니다' });
+      return res.status(401).json({
+        message: '유효하지 않은 토큰 형식입니다',
+        errorMessageKey: 'INVALID_TOKEN_FORMAT',
+      });
     }
 
     // 토큰 검증 및 사용자 ID 추출
@@ -32,10 +39,11 @@ router.get('/', async (req: Request, res: Response) => {
       include: { school: true },
     });
 
-    console.log('user', user);
-
     if (!user) {
-      return res.status(404).json({ message: '등록되지 않은 사용자입니다' });
+      return res.status(404).json({
+        message: '등록되지 않은 사용자입니다',
+        errorMessageKey: 'USER_NOT_FOUND',
+      });
     }
 
     const userResponse: GetUserResponse = {
@@ -55,16 +63,19 @@ router.get('/', async (req: Request, res: Response) => {
         : null,
     };
 
-    res.status(200).json({
-      message: '사용자 조회가 완료되었습니다',
-      user: userResponse,
-    });
+    res.status(200).json(userResponse);
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ message: '유효하지 않은 토큰입니다' });
+      return res.status(401).json({
+        message: '유효하지 않은 토큰입니다',
+        errorMessageKey: 'INVALID_TOKEN',
+      });
     }
     console.error('사용자 조회 중 오류 발생:', error);
-    res.status(500).json({ message: '사용자 조회 중 오류가 발생했습니다' });
+    res.status(500).json({
+      message: '사용자 조회 중 오류가 발생했습니다',
+      errorMessageKey: 'USER_SEARCH_ERROR',
+    });
   }
 });
 
