@@ -14,20 +14,19 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  let token = req.cookies['access-token'];
 
-  if (!authHeader) {
-    return res.status(401).json({
-      success: false,
-      message: '인증이 필요합니다',
-    });
+  // 쿠키에 토큰이 없으면 Authorization 헤더 확인
+  if (!token && req.headers.authorization) {
+    token = req.headers.authorization.startsWith('Bearer ')
+      ? req.headers.authorization.split(' ')[1]
+      : req.headers.authorization;
   }
 
-  const token = authHeader.split(' ')[1];
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: '유효하지 않은 토큰 형식입니다',
+      message: '인증이 필요합니다',
     });
   }
 
