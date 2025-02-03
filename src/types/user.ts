@@ -1,16 +1,10 @@
-export interface User {
-  id: number;
-  phoneNumber: string;
-  name: string;
-  grade: number;
-  class: number;
-  schoolId: number;
-  createdAt: Date;
+import { User as PrismaUser } from '@prisma/client';
+
+export type User = PrismaUser;
+export type GetUserResponse = User & {
   school: {
     id: number;
     name: string;
     address: string | null;
   } | null;
-}
-
-export interface GetUserResponse extends User {}
+};

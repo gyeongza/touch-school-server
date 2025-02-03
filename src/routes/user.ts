@@ -29,6 +29,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       grade: user.grade,
       class: user.class,
       schoolId: user.schoolId,
+      waterCount: user.waterCount,
       createdAt: user.createdAt,
       school: user.school
         ? {

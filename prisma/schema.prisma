@@ -12,16 +12,54 @@ model School {
   name      String   // SCHUL_NM (학교명)
   address   String?  // ORG_RDNMA (도로명주소)
   createdAt DateTime @default(now())
-  users     User[]   // School과 User의 관계 설정
+  users     User[]   
+  tree      Tree?
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  phoneNumber String   @unique
-  name        String
-  grade       Int
-  class       Int
-  schoolId    Int
-  school      School   @relation(fields: [schoolId], references: [id])
-  createdAt   DateTime @default(now())
+  id            Int       @id @default(autoincrement())
+  phoneNumber   String    @unique
+  name          String
+  grade         Int
+  class         Int
+  schoolId      Int
+  school        School    @relation(fields: [schoolId], references: [id])
+  createdAt     DateTime  @default(now())
+  waterings     Watering[]
+  waterCount    Int       @default(3)
+  games         Game[]    // 추가
 }
+
+model Tree {
+  id            Int      @id @default(autoincrement())
+  level         Int      @default(1)
+  experience    Int      @default(0)
+  lastWateredAt DateTime @default(now())
+  school        School   @relation(fields: [schoolId], references: [id])
+  schoolId      Int      @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  waterings     Watering[]  // 추가
+}
+
+// 새로운 모델 추가
+model Watering {
+  id        Int      @id @default(autoincrement())
+  tree      Tree     @relation(fields: [treeId], references: [id])
+  treeId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+}
+
+// 새로운 Game 모델
+model Game {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  score     Int
+  reward    Int      // 획득한 물주기 횟수
+  playedAt  DateTime @default(now())
+  type      String   // 게임 종류 (추후 여러 게임 추가를 고려)
+}
+
