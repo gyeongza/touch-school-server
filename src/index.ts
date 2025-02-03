@@ -1,7 +1,13 @@
 import dotenv from 'dotenv';
+import path from 'path';
 import app from './app';
 
-dotenv.config();
+// 환경변수 설정
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: '.env.local' });
+} else {
+  dotenv.config();
+}
 
 const port =
   process.env.NODE_ENV === 'development' ? 8000 : process.env.PORT || 8080;
