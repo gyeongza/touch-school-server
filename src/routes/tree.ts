@@ -4,6 +4,7 @@ import express, { Request, Response } from 'express';
 import Tree from '../models/tree';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
+import Watering from '../models/watering';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -62,7 +63,6 @@ router.post(
     }
 
     try {
-      // 트리 존재 여부 확인
       const tree = await prisma.tree.findUnique({
         where: { schoolId },
       });
@@ -74,13 +74,25 @@ router.post(
         });
       }
 
-      const treeInstance = new Tree(tree);
-      const result = await treeInstance.water(schoolId);
+      const result = await Watering.water(tree.id, userId);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+          data: tree,
+        });
+      }
+
+      // 업데이트된 나무 정보 조회
+      const updatedTree = await prisma.tree.findUnique({
+        where: { id: tree.id },
+      });
 
       res.json({
-        success: result.success,
+        success: true,
         message: result.message,
-        data: treeInstance.getStatus(),
+        data: updatedTree,
       });
     } catch (error) {
       console.error('물주기 처리 오류:', error);
