@@ -144,39 +144,70 @@ router.post('/register', async (req: Request, res: Response) => {
         .json({ message: '전화번호 인증이 완료되지 않았습니다' });
     }
 
-    // 학교 존재 여부 확인
-    const school = await prisma.school.findUnique({
-      where: { id: schoolId },
+    // 트랜잭션으로 처리
+    const result = await prisma.$transaction(async (tx) => {
+      // 학교 존재 여부 확인
+      const school = await tx.school.findUnique({
+        where: { id: schoolId },
+      });
+
+      if (!school) {
+        throw new Error('존재하지 않는 학교입니다');
+      }
+
+      const gradeNum = parseInt(grade);
+      const classNum = parseInt(classNumber);
+
+      // 해당 학교의 첫 번째 학생인지 확인
+      const existingStudentCount = await tx.user.count({
+        where: { schoolId },
+      });
+
+      // 사용자 생성
+      const user = await tx.user.create({
+        data: {
+          phoneNumber,
+          name,
+          grade: gradeNum,
+          class: classNum,
+          schoolId,
+        },
+      });
+
+      // 첫 번째 학생이라면 나무 생성
+      if (existingStudentCount === 0) {
+        await tx.tree.create({
+          data: {
+            level: 1,
+            experience: 0,
+            schoolId,
+          },
+        });
+      }
+
+      return user;
     });
 
-    if (!school) {
-      return res.status(404).json({ message: '존재하지 않는 학교입니다' });
-    }
-
-    const gradeNum = parseInt(grade);
-    const classNum = parseInt(classNumber);
-
-    // 사용자 생성
-    const user = await prisma.user.create({
-      data: {
-        phoneNumber,
-        name,
-        grade: gradeNum,
-        class: classNum,
-        schoolId,
-      },
-    });
-
-    generateTokenAndSetCookie(user, res);
+    generateTokenAndSetCookie(result, res);
 
     // token 제외하고 응답
     res.status(201).json({
       message: '회원가입이 완료되었습니다',
-      user,
+      user: result,
     });
   } catch (error) {
     console.error('회원가입 처리 중 오류 발생:', error);
-    res.status(500).json({ message: '회원가입 처리 중 오류가 발생했습니다' });
+    if (error instanceof Error) {
+      res
+        .status(error.message === '존재하지 않는 학교입니다' ? 404 : 500)
+        .json({
+          message: error.message,
+        });
+    } else {
+      res.status(500).json({
+        message: '회원가입 처리 중 오류가 발생했습니다',
+      });
+    }
   }
 });
 
