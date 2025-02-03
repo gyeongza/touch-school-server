@@ -36,7 +36,12 @@ router.get(
         });
       }
 
-      const treeInstance = new Tree(tree);
+      const treeInstance = new Tree(tree, async (oldLevel, newLevel) => {
+        console.log(`나무 레벨업! ${oldLevel} -> ${newLevel}`);
+        // 여기서 레벨업 관련 추가 로직 구현 가능
+        // 예: 알림 발송, 보상 지급 등
+      });
+
       return res.json(treeInstance.getStatus());
     } catch (error: any) {
       console.error('나무 상태 조회 오류:', error);
