@@ -13,16 +13,26 @@ services:
       - $DB_LOCAL_PORT:$DB_DOCKER_PORT
     volumes:
       - db:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d school_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     depends_on:
-      - postgresdb
+      postgresdb:
+        condition: service_healthy
     build: .
     restart: unless-stopped
     env_file: ./.env
     ports:
       - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+      - '5555:5555'
     environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgresdb:${DB_DOCKER_PORT}/${DB_NAME}?schema=public
       - DB_HOST=postgresdb
       - DB_USER=$DB_USER
       - DB_PASSWORD=$DB_PASSWORD
@@ -30,6 +40,12 @@ services:
       - DB_PORT=$DB_DOCKER_PORT
     stdin_open: true
     tty: true
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   db:

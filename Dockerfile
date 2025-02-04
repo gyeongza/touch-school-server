@@ -18,5 +18,7 @@ RUN npm run build
 
 EXPOSE 8080
 
-# Express 서버 실행
-CMD ["npm", "run", "start"] 
+# 시작 스크립트 수정
+COPY ./docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"] 

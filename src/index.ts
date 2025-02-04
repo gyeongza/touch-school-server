@@ -9,8 +9,7 @@ if (process.env.NODE_ENV === 'development') {
   dotenv.config();
 }
 
-const port =
-  process.env.NODE_ENV === 'development' ? 8000 : process.env.PORT || 8080;
+const port = process.env.NODE_DOCKER_PORT || 8000;
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
