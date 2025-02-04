@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import path from 'path';
 import app from './app';
 
 // 환경변수 설정
@@ -9,10 +8,10 @@ if (process.env.NODE_ENV === 'development') {
   dotenv.config();
 }
 
-const port = process.env.NODE_DOCKER_PORT || 8000;
+const port = parseInt(process.env.NODE_DOCKER_PORT || '8080', 10);
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
 });
 
 // 예상치 못한 에러 처리
