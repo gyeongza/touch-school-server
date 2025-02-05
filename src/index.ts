@@ -1,12 +1,11 @@
 import dotenv from 'dotenv';
 import app from './app';
 
-// 환경변수 설정
-if (process.env.NODE_ENV === 'development') {
-  dotenv.config({ path: '.env.local' });
-} else {
-  dotenv.config();
-}
+// 환경변수 설정 (개선된 버전)
+dotenv.config({
+  path: process.env.NODE_ENV === 'development' ? '.env.local' : '.env',
+  override: true,
+});
 
 const port = parseInt(process.env.NODE_DOCKER_PORT || '8080', 10);
 
