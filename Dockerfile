@@ -2,6 +2,9 @@ FROM node:20.9.0-alpine
 
 WORKDIR /app
 
+# PostgreSQL 클라이언트 도구 설치 추가
+RUN apk add --no-cache postgresql-client
+
 # 먼저 종속성 설치를 위한 파일들만 복사
 COPY package*.json ./
 COPY prisma ./prisma/
