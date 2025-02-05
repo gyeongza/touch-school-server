@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import app from './app';
+import { logger } from './utils/logger';
 
 // 환경변수 설정 (개선된 버전)
 dotenv.config({
@@ -10,7 +11,7 @@ dotenv.config({
 const port = parseInt(process.env.NODE_DOCKER_PORT || '8080', 10);
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
+  logger.info(`[server]: Server is running at http://0.0.0.0:${port}`);
 });
 
 // 예상치 못한 에러 처리

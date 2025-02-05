@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { logger } from '../utils/logger';
 
 declare global {
   namespace Express {
@@ -24,6 +25,7 @@ export const authenticateToken = (
   }
 
   if (!token) {
+    logger.error('인증이 필요합니다');
     return res.status(401).json({
       success: false,
       message: '인증이 필요합니다',
@@ -38,6 +40,7 @@ export const authenticateToken = (
     req.user = decoded;
     next();
   } catch (error) {
+    logger.error('유효하지 않은 토큰입니다');
     return res.status(401).json({
       success: false,
       message: '유효하지 않은 토큰입니다',
