@@ -17,8 +17,13 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
+      'https://localhost:3000',
       'http://43.202.43.224:8080',
+      'https://43.202.43.224:8080',
       'http://43.202.43.224',
+      'https://43.202.43.224',
+      'https://api.touch-school.site',
+      'https://touch-school.site',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
