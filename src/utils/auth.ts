@@ -23,5 +23,7 @@ export const generateTokenAndSetCookie = (user: User, res: Response): void => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30일
+    sameSite: 'strict', // CSRF 공격 방지
+    path: '/', // 쿠키가 유효한 경로 설정
   });
 };
