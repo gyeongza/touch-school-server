@@ -4,7 +4,8 @@ services:
   postgresdb:
     image: postgres
     restart: unless-stopped
-    env_file: ./.env
+    env_file:
+      - ./.env
     environment:
       - POSTGRES_USER=$DB_USER
       - POSTGRES_PASSWORD=$DB_PASSWORD
@@ -27,7 +28,8 @@ services:
         condition: service_healthy
     build: .
     restart: unless-stopped
-    env_file: ./.env
+    env_file:
+      - ./.env
     ports:
       - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
       - '5555:5555'
@@ -38,7 +40,7 @@ services:
       - DB_PASSWORD=$DB_PASSWORD
       - DB_NAME=$DB_NAME
       - DB_PORT=$DB_DOCKER_PORT
-      - NODE_ENV=production
+      - NODE_ENV=$NODE_ENV
     stdin_open: true
     tty: true
     networks:

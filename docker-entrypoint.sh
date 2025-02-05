@@ -9,7 +9,6 @@ done
 # 환경별 마이그레이션 전략 분리
 if [ "$NODE_ENV" = "development" ]; then
   echo "Running development migrations..."
-  npx prisma migrate reset --force
   npx prisma db push
 else
   echo "Running production migrations..."
@@ -20,6 +19,6 @@ fi
 echo "Generating Prisma client..."
 npx prisma generate
 
-# 서버 시작
+# 서버 시작 (exec를 사용하여 프로세스 대체)
 echo "Starting the server..."
-npm run start 
+exec npm run start 

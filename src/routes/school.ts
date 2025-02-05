@@ -74,7 +74,19 @@ router.get('/schools/search', async (req: Request, res: Response) => {
       skipDuplicates: true,
     });
 
-    return res.status(200).json(schools);
+    // DB에서 새로 저장된 데이터를 조회하여 반환
+    const savedSchools = await prisma.school.findMany({
+      where: {
+        name: {
+          contains: keyword,
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return res.status(200).json(savedSchools);
   } catch (error) {
     console.error('학교 검색 중 오류 발생:', error);
     return res.status(500).json({ message: '서버 오류가 발생했습니다' });
