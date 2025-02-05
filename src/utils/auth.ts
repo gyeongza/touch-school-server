@@ -21,9 +21,10 @@ export const generateTokenAndSetCookie = (user: User, res: Response): void => {
 
   res.cookie('access-token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30일
-    sameSite: 'strict', // CSRF 공격 방지
-    path: '/', // 쿠키가 유효한 경로 설정
+    secure: true, // sameSite: 'none'을 사용할 때는 반드시 true로 설정
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    sameSite: 'none', // 크로스 사이트 요청 허용
+    domain: '.touch-school.site',
+    path: '/',
   });
 };
