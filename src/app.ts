@@ -5,6 +5,7 @@ import schoolRouter from './routes/school';
 import loginRouter from './routes/login';
 import userRouter from './routes/user';
 import treeRouter from './routes/tree';
+import attendanceRouter from './routes/attendance';
 import morgan from 'morgan';
 import { logger } from './utils/logger';
 const cookieParser = require('cookie-parser');
@@ -47,6 +48,7 @@ app.use('/api/v1/school', schoolRouter);
 app.use('/api/v1/login', loginRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/tree', treeRouter);
+app.use('/api/v1/attendance', attendanceRouter);
 
 // 헬스체크
 app.get('/ping', (_req, res) => {

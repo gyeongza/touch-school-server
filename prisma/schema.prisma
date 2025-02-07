@@ -28,6 +28,7 @@ model User {
   games       Game[]
   school      School     @relation(fields: [schoolId], references: [id])
   waterings   Watering[]
+  attendances Attendance[]
 }
 
 model Tree {
@@ -63,4 +64,15 @@ model Game {
   playedAt DateTime @default(now())
   type     String
   user     User     @relation(fields: [userId], references: [id])
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, createdAt])
+  @@index([userId])
+  @@index([createdAt])
 }
