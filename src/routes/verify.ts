@@ -104,13 +104,19 @@ router.post(
       });
 
       if (existingUser) {
-        generateTokenAndSetCookie(existingUser, res);
+        const { accessToken, accessTokenExpiryTime } =
+          generateTokenAndSetCookie(existingUser, res);
 
         return res.status(200).json({
           verified: true,
           isExistingUser: true,
           message: '인증이 완료되었습니다',
           user: existingUser,
+          body: {
+            accessToken,
+            accessTokenExpiryTime,
+            userData: existingUser,
+          },
         });
       }
 
@@ -188,12 +194,19 @@ router.post('/register', async (req: Request, res: Response) => {
       return user;
     });
 
-    generateTokenAndSetCookie(result, res);
+    const { accessToken, accessTokenExpiryTime } = generateTokenAndSetCookie(
+      result,
+      res
+    );
 
     // token 제외하고 응답
     res.status(201).json({
       message: '회원가입이 완료되었습니다',
-      user: result,
+      body: {
+        accessToken,
+        accessTokenExpiryTime,
+        userData: result,
+      },
     });
   } catch (error) {
     console.error('회원가입 처리 중 오류 발생:', error);
