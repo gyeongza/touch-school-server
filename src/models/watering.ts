@@ -11,7 +11,8 @@ const prisma = new PrismaClient();
 class Watering {
   static async water(
     treeId: number,
-    userId: number
+    userId: number,
+    waterCount: number = 1 // 기본값 1로 설정
   ): Promise<WateringResponse> {
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -28,24 +29,28 @@ class Watering {
           return { success: false, message: '나무를 찾을 수 없습니다.' };
         }
 
-        if (user.waterCount <= 0) {
+        if (user.waterCount < waterCount) {
           return {
             success: false,
-            message:
-              '물주기 가능 횟수를 모두 사용했습니다. 미니게임을 통해 추가 기회를 얻어보세요!',
+            message: `물주기 가능 횟수가 부족합니다. (보유: ${user.waterCount}회, 필요: ${waterCount}회)`,
           };
         }
 
         const treeInstance = new Tree(tree);
-        treeInstance.addExperience(15);
+        const expGain = 15 * waterCount;
+        treeInstance.addExperience(expGain);
 
         await Promise.all([
           tx.watering.create({
-            data: { treeId, userId },
+            data: {
+              treeId,
+              userId,
+              amount: waterCount, // 물준 횟수 기록
+            },
           }),
           tx.user.update({
             where: { id: userId },
-            data: { waterCount: user.waterCount - 1 },
+            data: { waterCount: user.waterCount - waterCount },
           }),
           tx.tree.update({
             where: { id: treeId },
@@ -59,7 +64,7 @@ class Watering {
 
         return {
           success: true,
-          message: `물주기 성공! 경험치 +15 (남은 물주기 횟수: ${user.waterCount - 1}회)`,
+          message: `물주기 성공! 경험치 +${expGain} (남은 물주기 횟수: ${user.waterCount - waterCount}회)`,
         };
       });
 

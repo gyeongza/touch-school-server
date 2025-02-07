@@ -33,6 +33,10 @@ services:
     ports:
       - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
       - '5555:5555'
+    volumes:
+      - .:/app # 소스 코드 마운트
+      - /app/node_modules # node_modules 제외
+      - /app/dist # 빌드 결과물 제외
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgresdb:${DB_DOCKER_PORT}/${DB_NAME}?schema=public
       - DB_HOST=postgresdb

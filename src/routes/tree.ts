@@ -59,11 +59,19 @@ router.post(
   authenticateToken,
   async (req: Request, res: Response) => {
     const { id: userId, schoolId } = req.user!;
+    const { count = 1 } = req.body; // 클라이언트에서 보내는 물주기 횟수, 기본값 1
 
     if (!schoolId || !userId) {
       return res.status(400).json({
         success: false,
         message: '사용자 정보를 찾을 수 없습니다',
+      });
+    }
+
+    if (!count || count < 1) {
+      return res.status(400).json({
+        success: false,
+        message: '유효하지 않은 물주기 횟수입니다',
       });
     }
 
@@ -79,7 +87,7 @@ router.post(
         });
       }
 
-      const result = await Watering.water(tree.id, userId);
+      const result = await Watering.water(tree.id, userId, count);
 
       if (!result.success) {
         return res.status(400).json({
@@ -89,7 +97,6 @@ router.post(
         });
       }
 
-      // 업데이트된 나무 정보 조회
       const updatedTree = await prisma.tree.findUnique({
         where: { id: tree.id },
       });
