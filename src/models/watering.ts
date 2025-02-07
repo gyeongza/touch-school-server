@@ -14,53 +14,48 @@ class Watering {
     userId: number
   ): Promise<WateringResponse> {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-      });
-
-      if (!user) {
-        return {
-          success: false,
-          message: '사용자를 찾을 수 없습니다.',
-        };
-      }
-
-      if (user.waterCount <= 0) {
-        return {
-          success: false,
-          message:
-            '물주기 가능 횟수를 모두 사용했습니다. 미니게임을 통해 추가 기회를 얻어보세요!',
-        };
-      }
-
-      // 트랜잭션으로 물주기 처리
       const result = await prisma.$transaction(async (tx) => {
-        // 물주기 기록 생성
-        await tx.watering.create({
-          data: { treeId, userId },
-        });
+        const [user, tree] = await Promise.all([
+          tx.user.findUnique({ where: { id: userId } }),
+          tx.tree.findUnique({ where: { id: treeId } }),
+        ]);
 
-        // 유저의 물주기 횟수 감소
-        await tx.user.update({
-          where: { id: userId },
-          data: { waterCount: user.waterCount - 1 },
-        });
+        if (!user) {
+          return { success: false, message: '사용자를 찾을 수 없습니다.' };
+        }
 
-        // 나무 경험치 증가
-        const tree = await tx.tree.findUnique({ where: { id: treeId } });
-        if (!tree) throw new Error('나무를 찾을 수 없습니다.');
+        if (!tree) {
+          return { success: false, message: '나무를 찾을 수 없습니다.' };
+        }
+
+        if (user.waterCount <= 0) {
+          return {
+            success: false,
+            message:
+              '물주기 가능 횟수를 모두 사용했습니다. 미니게임을 통해 추가 기회를 얻어보세요!',
+          };
+        }
 
         const treeInstance = new Tree(tree);
         treeInstance.addExperience(15);
 
-        await tx.tree.update({
-          where: { id: treeId },
-          data: {
-            experience: treeInstance.getExperience(),
-            level: treeInstance.getTreeLevel(),
-            lastWateredAt: new Date(),
-          },
-        });
+        await Promise.all([
+          tx.watering.create({
+            data: { treeId, userId },
+          }),
+          tx.user.update({
+            where: { id: userId },
+            data: { waterCount: user.waterCount - 1 },
+          }),
+          tx.tree.update({
+            where: { id: treeId },
+            data: {
+              experience: treeInstance.getExperience(),
+              level: treeInstance.getTreeLevel(),
+              lastWateredAt: new Date(),
+            },
+          }),
+        ]);
 
         return {
           success: true,
