@@ -40,4 +40,22 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+// 로그아웃 처리
+router.post('/logout', (req: Request, res: Response) => {
+  try {
+    res.clearCookie('access-token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: '.touch-school.site',
+      path: '/',
+    });
+
+    res.status(200).json({ message: '로그아웃이 완료되었습니다' });
+  } catch (error) {
+    console.error('로그아웃 처리 중 오류 발생:', error);
+    res.status(500).json({ message: '로그아웃 처리 중 오류가 발생했습니다' });
+  }
+});
+
 export default router;
