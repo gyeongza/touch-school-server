@@ -44,8 +44,8 @@ app.use(
 
 // 라우트 설정
 app.use('/api/v1/verify', verifyRouter);
-app.use('/api/v1/school', schoolRouter);
 app.use('/api/v1/login', loginRouter);
+app.use('/api/v1/school', schoolRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/tree', treeRouter);
 app.use('/api/v1/attendance', attendanceRouter);

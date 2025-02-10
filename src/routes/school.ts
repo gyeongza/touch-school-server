@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import type { NeisSchoolRow } from '../types/school';
+import { logger } from '../utils/logger';
+import { authenticateToken } from '../middleware/auth';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -15,7 +17,7 @@ router.get('/schools', async (req: Request, res: Response) => {
     });
     return res.status(200).json(schools);
   } catch (error) {
-    console.error('학교 목록 조회 중 오류 발생:', error);
+    logger.error('학교 목록 조회 중 오류 발생:', error);
     return res.status(500).json({ message: '서버 오류가 발생했습니다' });
   }
 });
@@ -88,9 +90,73 @@ router.get('/schools/search', async (req: Request, res: Response) => {
 
     return res.status(200).json(savedSchools);
   } catch (error) {
-    console.error('학교 검색 중 오류 발생:', error);
+    logger.error('학교 검색 중 오류 발생:', error);
     return res.status(500).json({ message: '서버 오류가 발생했습니다' });
   }
 });
+
+router.get(
+  '/:id/info',
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const schoolId = parseInt(id, 10);
+
+      const school = await prisma.school.findUnique({
+        where: { id: schoolId },
+        select: {
+          id: true,
+          name: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+              grade: true,
+              class: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  waterings: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!school) {
+        logger.error(`School not found - schoolId: ${id}`);
+        return res.status(404).json({ message: '학교를 찾을 수 없습니다' });
+      }
+
+      const formattedUsers = school.users
+        .map((user) => ({
+          id: user.id,
+          name: user.name,
+          grade: user.grade,
+          class: user.class,
+          wateringCount: user._count.waterings,
+          joinedAt: user.createdAt,
+        }))
+        .sort((a, b) => b.wateringCount - a.wateringCount);
+
+      // 현재 사용자 정보 찾기
+      const currentUser = formattedUsers.find((user) => user.id === userId);
+      // 현재 사용자를 제외한 나머지 목록
+      const otherUsers = formattedUsers.filter((user) => user.id !== userId);
+
+      return res.status(200).json({
+        schoolName: school.name,
+        currentUser: currentUser || null,
+        users: otherUsers,
+      });
+    } catch (error) {
+      logger.error('학교 정보 조회 중 오류 발생:', error);
+      return res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  }
+);
 
 export default router;
