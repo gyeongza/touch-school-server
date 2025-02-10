@@ -92,11 +92,23 @@ class Watering {
     });
   }
 
-  static async getUserWaterings(userId: number): Promise<PrismaWatering[]> {
-    return await prisma.watering.findMany({
+  static async getUserWaterings(
+    userId: number
+  ): Promise<{ waterings: PrismaWatering[]; totalAmount: number }> {
+    const waterings = await prisma.watering.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+
+    const totalAmount = waterings.reduce(
+      (sum, watering) => sum + watering.amount,
+      0
+    );
+
+    return {
+      waterings,
+      totalAmount,
+    };
   }
 }
 

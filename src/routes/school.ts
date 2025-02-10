@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import type { NeisSchoolRow } from '../types/school';
 import { logger } from '../utils/logger';
 import { authenticateToken } from '../middleware/auth';
+import Watering from '../models/watering';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -116,11 +117,6 @@ router.get(
               grade: true,
               class: true,
               createdAt: true,
-              _count: {
-                select: {
-                  waterings: true,
-                },
-              },
             },
           },
         },
@@ -131,16 +127,24 @@ router.get(
         return res.status(404).json({ message: '학교를 찾을 수 없습니다' });
       }
 
-      const formattedUsers = school.users
-        .map((user) => ({
-          id: user.id,
-          name: user.name,
-          grade: user.grade,
-          class: user.class,
-          wateringCount: user._count.waterings,
-          joinedAt: user.createdAt,
-        }))
-        .sort((a, b) => b.wateringCount - a.wateringCount);
+      // 각 사용자의 물주기 정보를 가져옵니다
+      const usersWithWaterings = await Promise.all(
+        school.users.map(async (user) => {
+          const { totalAmount } = await Watering.getUserWaterings(user.id);
+          return {
+            id: user.id,
+            name: user.name,
+            grade: user.grade,
+            class: user.class,
+            wateringCount: totalAmount,
+            joinedAt: user.createdAt,
+          };
+        })
+      );
+
+      const formattedUsers = usersWithWaterings.sort(
+        (a, b) => b.wateringCount - a.wateringCount
+      );
 
       // 현재 사용자 정보 찾기
       const currentUser = formattedUsers.find((user) => user.id === userId);
