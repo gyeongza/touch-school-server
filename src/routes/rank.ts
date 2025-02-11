@@ -28,6 +28,11 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       orderBy: [
         {
           tree: {
+            level: 'desc',
+          },
+        },
+        {
+          tree: {
             experience: 'desc',
           },
         },
