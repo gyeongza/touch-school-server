@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { logger } from '../utils/logger';
+import { tokenUtils } from '../utils/token';
 
 declare global {
   namespace Express {
@@ -15,14 +16,7 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction
 ) => {
-  let token = req.cookies['access-token'];
-
-  // 쿠키에 토큰이 없으면 Authorization 헤더 확인
-  if (!token && req.headers.authorization) {
-    token = req.headers.authorization.startsWith('Bearer ')
-      ? req.headers.authorization.split(' ')[1]
-      : req.headers.authorization;
-  }
+  const token = tokenUtils.extractTokenFromRequest(req);
 
   if (!token) {
     logger.error('인증이 필요합니다');
@@ -33,11 +27,7 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as JwtPayload;
-    req.user = decoded;
+    req.user = tokenUtils.verifyToken(token);
     next();
   } catch (error) {
     logger.error('유효하지 않은 토큰입니다');

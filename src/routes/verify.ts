@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { generateTokenAndSetCookie } from '../utils/auth';
+import { authenticateToken } from '../middleware/auth';
+import { tokenUtils } from '../utils/token';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -77,10 +79,24 @@ router.get(
 router.post(
   '/confirm',
   async (
-    req: Request<object, object, { phoneNumber: string; code: string }>,
+    req: Request<{}, any, { phoneNumber: string; code: string }>,
     res: Response
   ) => {
     const { phoneNumber, code } = req.body;
+
+    const token = tokenUtils.extractTokenFromRequest(req);
+
+    if (token) {
+      const decoded = tokenUtils.verifyToken(token);
+      if (decoded.phoneNumber === phoneNumber) {
+        return res.status(200).json({
+          verified: true,
+          isExistingUser: true,
+          message: '이미 인증된 사용자입니다',
+        });
+      }
+    }
+
     const storedCode = verificationStore[phoneNumber];
 
     if (!storedCode) {
