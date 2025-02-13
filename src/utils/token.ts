@@ -2,11 +2,16 @@ import { Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { User } from '../types/user';
 
-interface TokenPayload {
+export interface TokenPayload {
   id: number;
   phoneNumber: string;
   schoolId: number;
   exp: number;
+}
+
+export interface TokenGenerateResult {
+  token: string;
+  expiryDate: Date;
 }
 
 export const TOKEN_CONFIG = {
@@ -14,15 +19,15 @@ export const TOKEN_CONFIG = {
   COOKIE_NAME: 'access-token',
   COOKIE_OPTIONS: {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none' as const,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none',
     domain: '.touch-school.site',
     path: '/',
   },
-};
+} as const;
 
 export const tokenUtils = {
-  generateToken(user: User): { token: string; expiryDate: Date } {
+  generateToken(user: User): TokenGenerateResult {
     const expiryDate = new Date(
       Date.now() + TOKEN_CONFIG.EXPIRY_DAYS * 24 * 60 * 60 * 1000
     );
