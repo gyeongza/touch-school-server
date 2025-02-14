@@ -84,19 +84,6 @@ router.post(
   ) => {
     const { phoneNumber, code } = req.body;
 
-    const token = tokenUtils.extractTokenFromRequest(req);
-
-    if (token) {
-      const decoded = tokenUtils.verifyToken(token);
-      if (decoded.phoneNumber === phoneNumber) {
-        return res.status(200).json({
-          verified: true,
-          isExistingUser: true,
-          message: '이미 인증된 사용자입니다',
-        });
-      }
-    }
-
     const storedCode = verificationStore[phoneNumber];
 
     if (!storedCode) {
@@ -120,6 +107,7 @@ router.post(
       });
 
       if (existingUser) {
+        // 토큰이 없는 경우: 새로운 토큰 발급
         const { accessToken, accessTokenExpiryTime } =
           generateTokenAndSetCookie(existingUser, res);
 
@@ -127,7 +115,6 @@ router.post(
           verified: true,
           isExistingUser: true,
           message: '인증이 완료되었습니다',
-          user: existingUser,
           body: {
             accessToken,
             accessTokenExpiryTime,
