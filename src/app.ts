@@ -23,6 +23,8 @@ app.use(
       'https://touch-school.site',
       'https://www.touch-school.site',
       'https://api.touch-school.site',
+      'http://10.0.2.2:3000',
+      'http://10.0.2.2',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
