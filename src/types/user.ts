@@ -7,4 +7,5 @@ export type GetUserResponse = User & {
     name: string;
     address: string | null;
   } | null;
+  gameAvailableCount: number;
 };

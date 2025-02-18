@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import { GetUserResponse } from '../types/user';
 import { logger } from '../utils/logger';
+import Game from '../models/game';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -23,6 +24,8 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       });
     }
 
+    const gameAvailableCount = await Game.getTodayGameAvailableCount(userId);
+
     const userResponse: GetUserResponse = {
       id: user.id,
       name: user.name,
@@ -39,6 +42,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
             address: user.school.address || null,
           }
         : null,
+      gameAvailableCount,
     };
 
     res.status(200).json(userResponse);

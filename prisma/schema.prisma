@@ -57,13 +57,14 @@ model Watering {
 }
 
 model Game {
-  id       Int      @id @default(autoincrement())
-  userId   Int
-  score    Int
-  reward   Int
-  playedAt DateTime @default(now())
-  type     String
-  user     User     @relation(fields: [userId], references: [id])
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  completedLevels Int[]    // 완료한 레벨 배열
+  allCompleted    Boolean  // 전체 레벨 클리어 여부
+  reward          Int      // 보상으로 받은 물주기 횟수
+  playedAt        DateTime @default(now())
+  type            String
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model Attendance {

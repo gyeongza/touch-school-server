@@ -7,6 +7,8 @@ import userRouter from './routes/user';
 import treeRouter from './routes/tree';
 import attendanceRouter from './routes/attendance';
 import rankRouter from './routes/rank';
+import gameRouter from './routes/game';
+
 import morgan from 'morgan';
 import { logger } from './utils/logger';
 const cookieParser = require('cookie-parser');
@@ -25,6 +27,8 @@ app.use(
       'https://api.touch-school.site',
       'http://10.0.2.2:3000',
       'http://10.0.2.2',
+      'http://192.168.219.201:3000',
+      'http://192.168.219.201',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
@@ -53,6 +57,7 @@ app.use('/api/v1/user', userRouter);
 app.use('/api/v1/tree', treeRouter);
 app.use('/api/v1/attendance', attendanceRouter);
 app.use('/api/v1/rank', rankRouter);
+app.use('/api/v1/game', gameRouter);
 
 // 헬스체크
 app.get('/ping', (_req, res) => {
