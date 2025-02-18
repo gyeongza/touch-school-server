@@ -87,24 +87,17 @@ router.post(
         });
       }
 
-      const result = await Watering.water(tree.id, userId, count);
-
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: result.message,
-          data: tree,
-        });
-      }
-
-      const updatedTree = await prisma.tree.findUnique({
-        where: { id: tree.id },
+      // 레벨업 콜백 함수를 전달
+      const treeInstance = new Tree(tree, (oldLevel, newLevel, _) => {
+        console.log(`나무 레벨업! ${oldLevel} -> ${newLevel}`);
       });
+
+      const result = await Watering.water(tree.id, userId, count, treeInstance);
 
       res.json({
         success: true,
         message: result.message,
-        data: updatedTree,
+        data: result.tree,
       });
     } catch (error) {
       console.error('물주기 처리 오류:', error);

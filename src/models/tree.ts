@@ -7,11 +7,19 @@ import { WateringResponse } from './watering';
 
 class Tree {
   private tree: PrismaTree;
-  private onLevelUp?: (oldLevel: number, newLevel: number) => void;
+  private onLevelUp?: (
+    oldLevel: number,
+    newLevel: number,
+    updatedTree: PrismaTree
+  ) => void;
 
   constructor(
     prismaTree: PrismaTree,
-    onLevelUp?: (oldLevel: number, newLevel: number) => void
+    onLevelUp?: (
+      oldLevel: number,
+      newLevel: number,
+      updatedTree: PrismaTree
+    ) => void
   ) {
     this.tree = prismaTree;
     this.onLevelUp = onLevelUp;
@@ -47,7 +55,7 @@ class Tree {
       this.tree.level += 1;
       this.tree.experience -= experienceNeeded;
 
-      this.onLevelUp?.(oldLevel, this.tree.level);
+      this.onLevelUp?.(oldLevel, this.tree.level, { ...this.tree });
     }
   }
 }

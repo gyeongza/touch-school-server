@@ -1,4 +1,8 @@
-import { PrismaClient, Watering as PrismaWatering } from '@prisma/client';
+import {
+  PrismaClient,
+  Watering as PrismaWatering,
+  Tree as PrismaTree,
+} from '@prisma/client';
 import Tree from './tree';
 
 interface WateringResponse {
@@ -12,8 +16,9 @@ class Watering {
   static async water(
     treeId: number,
     userId: number,
-    waterCount: number = 1 // 기본값 1로 설정
-  ): Promise<WateringResponse> {
+    waterCount: number = 1,
+    treeInstance: Tree
+  ): Promise<WateringResponse & { tree: PrismaTree }> {
     try {
       const result = await prisma.$transaction(async (tx) => {
         const [user, tree] = await Promise.all([
@@ -22,49 +27,54 @@ class Watering {
         ]);
 
         if (!user) {
-          return { success: false, message: '사용자를 찾을 수 없습니다.' };
+          return {
+            success: false,
+            message: '사용자를 찾을 수 없습니다.',
+            tree: tree!,
+          };
         }
 
         if (!tree) {
-          return { success: false, message: '나무를 찾을 수 없습니다.' };
+          throw new Error('나무를 찾을 수 없습니다.');
         }
 
         if (user.waterCount < waterCount) {
           return {
             success: false,
             message: `물주기 가능 횟수가 부족합니다. (보유: ${user.waterCount}회, 필요: ${waterCount}회)`,
+            tree: tree,
           };
         }
 
-        const treeInstance = new Tree(tree);
         const expGain = 15 * waterCount;
         treeInstance.addExperience(expGain);
 
-        await Promise.all([
-          tx.watering.create({
-            data: {
-              treeId,
-              userId,
-              amount: waterCount, // 물준 횟수 기록
-            },
-          }),
-          tx.user.update({
-            where: { id: userId },
-            data: { waterCount: user.waterCount - waterCount },
-          }),
-          tx.tree.update({
-            where: { id: treeId },
-            data: {
-              experience: treeInstance.getExperience(),
-              level: treeInstance.getTreeLevel(),
-              lastWateredAt: new Date(),
-            },
-          }),
-        ]);
+        const updatedTree = await tx.tree.update({
+          where: { id: treeId },
+          data: {
+            experience: treeInstance.getExperience(),
+            level: treeInstance.getTreeLevel(),
+            lastWateredAt: new Date(),
+          },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { waterCount: user.waterCount - waterCount },
+        });
+
+        await tx.watering.create({
+          data: {
+            treeId,
+            userId,
+            amount: waterCount,
+          },
+        });
 
         return {
           success: true,
-          message: `물주기 성공! 경험치 +${expGain} (남은 물주기 횟수: ${user.waterCount - waterCount}회)`,
+          message: `물주기 성공! (남은 물주기 횟수: ${user.waterCount - waterCount}회)`,
+          tree: updatedTree,
         };
       });
 
