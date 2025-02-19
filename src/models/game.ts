@@ -3,14 +3,13 @@ import { PrismaClient, Game as PrismaGame } from '@prisma/client';
 const prisma = new PrismaClient();
 
 interface GameResult {
-  success: boolean;
   message: string;
   waterCount?: number;
   gameCompleted?: boolean;
 }
 
 class Game {
-  static readonly DAILY_LIMIT = 3;
+  static readonly DAILY_LIMIT = 10;
   static readonly WATER_REWARD = 10;
 
   static async canPlayToday(userId: number): Promise<boolean> {
@@ -54,7 +53,6 @@ class Game {
       const canPlay = await this.canPlayToday(userId);
       if (!canPlay) {
         return {
-          success: false,
           message:
             '오늘은 더 이상 게임을 플레이할 수 없습니다. 내일 다시 도전해주세요!',
         };
@@ -88,7 +86,6 @@ class Game {
           });
 
           return {
-            success: true,
             message: `축하합니다! 모든 레벨을 클리어하여 물주기 기회 ${this.WATER_REWARD}회를 획득했습니다!`,
             waterCount: updatedUser.waterCount,
             gameCompleted: true,
@@ -100,7 +97,6 @@ class Game {
           .join(', ');
 
         return {
-          success: false,
           message: `아직 클리어하지 못한 레벨이 있습니다: ${remainingLevels}단계`,
           gameCompleted: false,
         };
